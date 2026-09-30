@@ -1,0 +1,6 @@
+.venv/
+_bf.so
+__pycache__/
+out*/
+data/*/*.bin
+*.pt

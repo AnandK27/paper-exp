@@ -1,0 +1,60 @@
+diff --git a/scripts/base_train.py b/scripts/base_train.py
+index d1af271..1ffb5eb 100644
+--- a/scripts/base_train.py
++++ b/scripts/base_train.py
+@@ -67,6 +67,8 @@ parser.add_argument("--scalar-lr", type=float, default=0.5, help="learning rate
+ parser.add_argument("--warmup-steps", type=int, default=40, help="number of steps for LR warmup")
+ parser.add_argument("--warmdown-ratio", type=float, default=0.65, help="ratio of iterations for LR warmdown")
+ parser.add_argument("--final-lr-frac", type=float, default=0.05, help="final LR as fraction of initial LR")
++parser.add_argument("--init-from", type=str, default="", help="warm-start weights from a self-play checkpoint (nanochat_state)")
++parser.add_argument("--seed", type=int, default=-1, help="reseed torch before model init (-1 = nanochat default)")
+ parser.add_argument("--resume-from-step", type=int, default=-1, help="resume training from this step (-1 = disable)")
+ # Evaluation
+ parser.add_argument("--eval-every", type=int, default=250, help="evaluate val bpb every N steps (-1 = disable)")
+@@ -143,12 +145,27 @@ def build_model_meta(depth):
+     return model_meta
+ 
+ # Build the model, move to device, init the weights
++if args.seed >= 0:
++    torch.manual_seed(args.seed)
++    torch.cuda.manual_seed(args.seed)
+ model = build_model_meta(args.depth) # 1) Build on meta device (only shapes/dtypes, no data)
+ model_config = model.config
+ model_config_kwargs = asdict(model_config)
+ print0(f"Model config:\n{json.dumps(model_config_kwargs, indent=2)}")
+ model.to_empty(device=device) # 2) All tensors get storage on target device but with uninitialized (garbage) data
+ model.init_weights() # 3) All tensors get initialized
++init_flops = 0.0
++if args.init_from:
++    _ck = torch.load(args.init_from, map_location=device, weights_only=False)
++    model.load_state_dict(_ck["nanochat_state"], strict=True)
++    init_flops = float(_ck.get("flops", 0.0))
++    print0(f"Warm start from {args.init_from} (self-play round {_ck.get('round')}, {init_flops:.3e} FLOPs)")
++    del _ck
++_jsonl = os.environ.get("NANOCHAT_JSONL")
++def _log_jsonl(rec):
++    if _jsonl and master_process:
++        with open(_jsonl, "a") as _f:
++            _f.write(json.dumps(rec) + "\n")
+ 
+ # If we are resuming, overwrite the model parameters with those of the checkpoint
+ base_dir = get_base_dir()
+@@ -425,6 +442,7 @@ while True:
+         with disable_fp8(model):
+             val_bpb = evaluate_bpb(model, val_loader, eval_steps, token_bytes)
+         print0(f"Step {step:05d} | Validation bpb: {val_bpb:.6f}")
++        _log_jsonl({"step": step, "val_bpb": val_bpb, "flops": flops_so_far, "total_flops": flops_so_far + init_flops})
+         if val_bpb < min_val_bpb:
+             min_val_bpb = val_bpb
+         wandb_run.log({
+@@ -598,6 +616,10 @@ print0(f"Peak memory usage: {get_max_memory() / 1024 / 1024:.2f}MiB")
+ print0(f"Total training time: {total_training_time/60:.2f}m")
+ if val_bpb is not None:
+     print0(f"Minimum validation bpb: {min_val_bpb:.6f}")
++    _log_jsonl({"final_val_bpb": val_bpb, "min_val_bpb": min_val_bpb, "num_iterations": num_iterations,
++                "train_flops": num_flops_per_token * total_batch_size * num_iterations, "selfplay_flops": init_flops,
++                "total_flops": num_flops_per_token * total_batch_size * num_iterations + init_flops,
++                "init_from": args.init_from, "seed": args.seed, "depth": args.depth})
+ 
+ # cleanup
+ wandb_run.finish() # wandb run finish

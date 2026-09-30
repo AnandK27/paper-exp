@@ -1,0 +1,579 @@
+<title>Warm-up at Equal Compute</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+/* Layout: one reading column (~70ch) with full-width figure panels; lab-notebook tone, numbers in mono. */
+:root {
+  --bg: #f7f7f4; --surface: #fcfcfb; --ink: #151514; --ink-2: #52514e; --muted: #8b8a84; --grid: #e4e3dd; --rule: #d6d5ce;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s8: #e34948; --ref: #52514e;
+  --f-display: "IBM Plex Serif", Georgia, serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121211; --surface: #1a1a19; --ink: #f1f0eb; --ink-2: #c3c2b7; --muted: #8d8c85; --grid: #2d2d2a; --rule: #3a3a37;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --ref: #c3c2b7; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121211; --surface: #1a1a19; --ink: #f1f0eb; --ink-2: #c3c2b7; --muted: #8d8c85; --grid: #2d2d2a; --rule: #3a3a37;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --ref: #c3c2b7; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--f-body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 40px 64px; display: grid; gap: 36px; }
+header { display: grid; gap: 10px; max-width: 70ch; }
+.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 600 clamp(28px, 4.2vw, 40px)/1.15 var(--f-display); margin: 0; text-wrap: balance; }
+h2 { font: 600 20px/1.3 var(--f-display); margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+.lede { font-size: 17px; color: var(--ink-2); }
+.verdict { border-left: 3px solid var(--ink); padding: 4px 0 4px 14px; font-size: 16px; max-width: 70ch; }
+.verdict b { font-weight: 600; }
+section { display: grid; gap: 14px; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 18px 12px; display: grid; gap: 10px; min-width: 0; }
+figcaption { font-size: 13px; color: var(--ink-2); max-width: 75ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--f-mono); font-size: 11px; fill: var(--muted); }
+.chart .lab { font-family: var(--f-body); font-size: 12px; fill: var(--ink-2); }
+.chart .axis-title { font-family: var(--f-body); font-size: 12px; fill: var(--ink-2); }
+.tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 7px 9px; font: 12px/1.45 var(--f-mono); box-shadow: 0 2px 10px rgba(0,0,0,.12); white-space: nowrap; z-index: 2; }
+.multi { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+.multi figure { padding: 12px 12px 8px; }
+.png { background: #ffffff; border-radius: 4px; padding: 6px; }
+.png img { display: block; width: 100%; height: auto; }
+h3 { font: 600 16px/1.3 var(--f-display); margin: 8px 0 0; text-wrap: balance; }
+.panel-title { font: 500 13px/1.3 var(--f-body); color: var(--ink); }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font: 13px/1.4 var(--f-mono); font-variant-numeric: tabular-nums; }
+th, td { padding: 7px 12px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th { font: 500 12px/1.3 var(--f-body); color: var(--ink-2); background: var(--bg); position: sticky; top: 0; }
+th:first-child, td:first-child { text-align: left; }
+tr.sep td { border-top: 1px solid var(--rule); }
+td.win { font-weight: 600; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+ul.notes { margin: 0; padding-left: 18px; display: grid; gap: 6px; max-width: 75ch; color: var(--ink-2); }
+code { font-family: var(--f-mono); font-size: .92em; }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; width: fit-content; }
+.seg button { font: 500 13px/1 var(--f-body); color: var(--ink-2); background: var(--surface); border: 0; padding: 8px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg button:focus-visible { outline: 2px solid var(--s1); outline-offset: -2px; }
+.pending { color: var(--muted); font-style: italic; }
+@media (prefers-reduced-motion: no-preference) { .chart .mk { transition: r .12s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Self-play pretraining (arXiv:2609.30063) · 1M byte model on Shakespeare · nanochat d8 on ClimbMix · 1× H200</div>
+    <h1>Does a synthetic warm-up help at equal compute?</h1>
+    <p class="lede">Each arm spends one fixed FLOP budget. A share of it goes to a warm-up on synthetic data (self-play on a Brainf*ck or stack machine, the paper's random PCFGs, or hand-designed generators for nested brackets, copying and word-like text), and the rest goes to ordinary next-byte training on Shakespeare. Scratch spends all of it on Shakespeare.</p>
+  </header>
+  <p class="verdict" id="verdict"></p>
+
+  <section>
+    <h2>Final loss vs. warm-up share, 1e14 FLOPs</h2>
+    <div class="two">
+      <figure>
+        <div class="legend" id="legend-main-a"></div>
+        <div class="chart" id="chart-main-a"></div>
+        <figcaption>The paper's methods: self-play on a Brainf*ck or stack machine, and random PCFGs.</figcaption>
+      </figure>
+      <figure>
+        <div class="legend" id="legend-main-b"></div>
+        <div class="chart" id="chart-main-b"></div>
+        <figcaption>Hand-designed warm-ups from <code>synth.py</code>. Word-like text builds in priors about text on purpose.</figcaption>
+      </figure>
+    </div>
+    <p style="font-size:13px;color:var(--ink-2)">Validation bits per byte on the full Shakespeare val split after the whole budget (lower is better). Each point is the mean of 3 seeds at the better of two nanoGPT learning rates (1e-3, 3e-3); bars show ±1 std. The dashed line is scratch. Both panels share one y-scale. The x position is the share actually spent on the warm-up, which can overshoot the target by up to one self-play round.</p>
+  </section>
+
+  <section>
+    <h2>Learning curves at a 10% warm-up</h2>
+    <div class="two">
+      <figure>
+        <div class="seg" role="group" aria-label="Warm-up group"><button type="button" id="grp-a" aria-pressed="true">Paper methods</button><button type="button" id="grp-b" aria-pressed="false">Hand-designed</button></div>
+        <div class="legend" id="legend-curve"></div>
+        <div class="chart" id="chart-curve"></div>
+        <figcaption>Validation bits per byte against total compute spent, including the warm-up, at 1e14 FLOPs. Warm-up arms start their Shakespeare curve late because the first part of their budget went to the warm-up.</figcaption>
+      </figure>
+      <figure>
+        <div class="legend" id="legend-over"></div>
+        <div class="chart" id="chart-over"></div>
+        <figcaption>At 1e15 FLOPs (about 146 passes over Shakespeare) every arm overfits. Final loss improves with more warm-up only because less compute is left to overfit with. The best point on each curve (roughly what early stopping gives) is flat.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>nanochat, the maintained successor to nanoGPT</h2>
+    <p>karpathy/nanochat's own d8 recipe, unchanged: its GPT (rotary, QK-norm, ReLU², value embeddings, sliding windows), Muon optimizer, BPE tokenizer and ClimbMix web data, 1,920 steps and 1.49×10¹⁷ FLOPs. Self-play runs on the same model, fed single-byte tokens. Each control trains from random init for exactly the steps its warm arm gets after self-play, so the only difference between them is the starting weights.</p>
+    <div class="two">
+      <figure>
+        <div class="legend" id="legend-nc"></div>
+        <div class="chart" id="chart-nc"></div>
+        <figcaption>Final val bits/byte on nanochat's validation set, mean of 2 seeds, ±1 std. A self-play warm start is worse than scratch, and also worse than random init given the same number of nanochat steps.</figcaption>
+      </figure>
+      <figure>
+        <div class="legend" id="legend-nc-ood"></div>
+        <div class="chart" id="chart-nc-ood"></div>
+        <figcaption>Out-of-distribution sets: warm start minus its matched random-init control (bits/byte; above zero means self-play hurt). Grey bars show the seed-to-seed spread of scratch on each set. Brainf*ck outputs are left out here (differences of +2.8 to +4.5 on a very noisy scale) and appear in the table.</figcaption>
+      </figure>
+    </div>
+    <div class="tablewrap"><table id="table-nc"></table></div>
+  </section>
+
+  <section>
+    <h2>nanochat with a byte tokenizer, self-play charged only its learner FLOPs</h2>
+    <p>The same nanochat d8 recipe, with its BPE tokenizer replaced by the 256 raw bytes, so self-play and web-text training share one token space. Self-play is charged only the FLOPs of training the learner; its reward pass and program generator are free, as in the paper's accounting. The budget is nanochat’s own horizon for this model: 1,159 steps and 5.96×10¹⁶ FLOPs. Self-play gets about 240, 475, 945, 1,890 and 2,830 rounds at 5%, 10%, 20%, 40% and 60%. For 40% and 60%, a third arm reuses the same self-play checkpoint but trains nanochat for the full budget, with self-play not charged, which is how the paper frames it.</p>
+    <p class="verdict"><b>Self-play gives a real head start that fades.</b> With enough rounds (40% and up), a self-play checkpoint trains better than random init over the same short schedule. At equal compute it still loses to scratch, and when self-play is free and nanochat trains for the full horizon, it only ties scratch (1.2301 and 1.2328 vs 1.2307).</p>
+    <div class="two">
+      <figure>
+        <div class="legend" id="legend-nc-b"></div>
+        <div class="chart" id="chart-nc-b"></div>
+        <figcaption>Final val bits/byte, mean of 2 seeds, ±1 std. The gap between the warm start and random init given the same steps goes from 0.013 worse (5%) to 0.002 worse (20%), then to 0.008 better (40%) and 0.034 better (60%). The warm start is still far behind scratch, because self-play displaces most of the web-text training.</figcaption>
+      </figure>
+      <figure>
+        <div class="legend" id="legend-nc-free-b"></div>
+        <div class="chart" id="chart-nc-free-b"></div>
+        <figcaption>The self-play checkpoint treated as free, trained for nanochat's full 1,159 steps, against scratch. It leads by about 0.07 bits/byte at step 250, the lead is gone by step 750, and the runs finish level.</figcaption>
+      </figure>
+    </div>
+    <figure>
+      <div class="legend" id="legend-nc-ood-b"></div>
+      <div class="chart" id="chart-nc-ood-b"></div>
+      <figcaption>Out-of-distribution sets: warm start minus its matched random-init control (below zero means self-play helped). Grey bars show the scratch seed-to-seed spread. Copying improves at every share, and at 60% everything improves, but that comparison is against a control trained for only 464 steps. After full training (free-checkpoint rows in the table) the advantage is gone: the free checkpoints are worse than scratch at copying (+0.03 to +0.06) and arithmetic (+0.16).</figcaption>
+    </figure>
+    <div class="tablewrap"><table id="table-nc-b"></table></div>
+  </section>
+
+  <section id="steps">
+    <h2>Step-by-step learning curves</h2>
+    <p>nanochat logs its training loss at every step (a debiased running average). Web text is never repeated in these runs, so this loss tracks validation loss closely and shows every step instead of an eval every 250. Curves are the mean of 2 seeds, plotted every 5 steps. The x-axis is nanochat training steps, so self-play compute is not on it.</p>
+
+    <h3>Byte tokenizer: self-play checkpoint given the full budget vs scratch</h3>
+    <figure>
+      <div class="legend" id="legend-st-free"></div>
+      <div class="chart" id="chart-st-free"></div>
+      <figcaption>Training loss (bits/byte) for scratch and for the 40% and 60% self-play checkpoints trained for nanochat's full 1,159 steps (self-play not charged). The y-axis is zoomed to the part of training where the curves separate.</figcaption>
+    </figure>
+    <div class="two">
+      <figure>
+        <div class="legend" id="legend-st-freegap"></div>
+        <div class="chart" id="chart-st-freegap"></div>
+        <figcaption>Free checkpoint minus scratch, by step. Below zero means the self-play checkpoint is ahead. The lead is largest early (about 0.7 bits/byte at step 100, beyond the clipped axis), shrinks steadily, and is gone before the end.</figcaption>
+      </figure>
+      <figure>
+        <div class="legend" id="legend-st-gap-b"></div>
+        <div class="chart" id="chart-st-gap-b"></div>
+        <figcaption>Warm start minus its matched random-init control, by step, for each self-play share (compute-matched arms). Below zero means the self-play starting point is ahead at that step. The y-axis is clipped at −0.3 so the late-training differences stay readable.</figcaption>
+      </figure>
+    </div>
+
+    <h3>Byte tokenizer: warm start vs random init, one panel per share</h3>
+    <div class="multi" id="multi-b"></div>
+
+    <h3>BPE tokenizer (first nanochat run)</h3>
+    <p>Loss here is nats per BPE token (nanochat's training loss), so it isn't on the same scale as the byte-level panels. Controls are scratch runs shortened to the warm arm's step count.</p>
+    <figure>
+      <div class="legend" id="legend-st-gap-bpe"></div>
+      <div class="chart" id="chart-st-gap-bpe"></div>
+      <figcaption>Warm start minus matched random-init control, by step (nats/token). The BPE warm start is behind at every step and every share: self-play there only trains single-byte tokens, so the model starts out miscalibrated for real BPE text.</figcaption>
+    </figure>
+    <div class="multi" id="multi-bpe"></div>
+  </section>
+
+  <section id="figures">
+    <h2>Static figures</h2>
+    <p>The same results as publication-style PNGs (200 dpi), rendered with matplotlib by <code>report/make_figs.py</code>. The files are in <code>report/figs/</code> in the repo.</p>
+    <figure>
+      <div class="png"><img src="figs/final_vs_share_bytes.png" alt="Final val bits per byte against self-play share for the byte-tokenizer run. Self-play then nanochat (blue) and random init with the same steps (orange) both rise with share, crossing between 20% and 40%; scratch is a dashed line at 1.2307; free checkpoints at 40% and 60% sit on the scratch line." loading="lazy"></div>
+      <figcaption>Byte tokenizer: final loss against self-play share. Self-play overtakes random init given the same steps between 20% and 40%, but both stay far above scratch. Free checkpoints (green) land on the scratch line.</figcaption>
+    </figure>
+    <figure>
+      <div class="png"><img src="figs/free_vs_scratch_steps.png" alt="Two panels. Left: training loss by step for scratch and for the 40% and 60% free self-play checkpoints; the checkpoints drop faster early and the curves merge by about step 600. Right: free checkpoint minus scratch by step, far below zero early and approaching zero by step 800." loading="lazy"></div>
+      <figcaption>Free self-play checkpoint (not charged) plus the full budget vs scratch. A large early head start fades to nothing by the end of training.</figcaption>
+    </figure>
+    <figure>
+      <div class="png"><img src="figs/warm_minus_control_steps.png" alt="Two panels of warm start minus random init by step. Byte tokenizer: shares of 10% and up dip well below zero early and rise back toward zero; 5% ends slightly above zero. BPE tokenizer: all shares are above zero, peaking near step 200, then decaying toward zero." loading="lazy"></div>
+      <figcaption>Warm start minus matched random init, by step. With byte tokens self-play starts ahead; with BPE tokens it starts behind. Either way the difference decays toward zero.</figcaption>
+    </figure>
+    <figure>
+      <div class="png"><img src="figs/panels_bytes.png" alt="Five panels, one per self-play share (5, 10, 20, 40, 60%), each showing training loss by step for scratch, random init and the self-play warm start under the byte tokenizer." loading="lazy"></div>
+      <figcaption>Byte tokenizer, one panel per share: self-play warm start vs random init vs scratch.</figcaption>
+    </figure>
+    <figure>
+      <div class="png"><img src="figs/panels_bpe.png" alt="Three panels, one per self-play share (5, 10, 20%), each showing training loss by step for scratch, random init and the self-play warm start under the BPE tokenizer; the warm start is above random init early in every panel." loading="lazy"></div>
+      <figcaption>BPE tokenizer, one panel per share: the warm start trails random init early in every panel.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2>All numbers</h2>
+    <div class="tablewrap"><table id="table"></table></div>
+  </section>
+
+  <section>
+    <h2>How to read this</h2>
+    <ul class="notes" id="notes"></ul>
+  </section>
+</div>
+
+<script type="application/json" id="data">/*DATA*/</script>
+<script type="application/json" id="data-nc">/*NANOCHAT*/</script>
+<script type="application/json" id="data-ncb">/*NANOCHAT_BYTES*/</script>
+<script type="application/json" id="data-steps">/*STEPS*/</script>
+<script>
+const DATA = JSON.parse(document.getElementById("data").textContent);
+const SERIES = [
+  { key: "bf_paper", name: "Brainf*ck self-play, paper rounds", short: "BF (paper rounds)", color: "var(--s1)", shape: "circle" },
+  { key: "bf", name: "Brainf*ck self-play, small rounds", short: "BF (small rounds)", color: "var(--s2)", shape: "square" },
+  { key: "stack", name: "Stack-machine self-play", short: "Stack machine", color: "var(--s3)", shape: "triangle" },
+  { key: "pcfg", name: "Random PCFG (paper appendix H)", short: "PCFG", color: "var(--s4)", shape: "diamond" },
+  { key: "dyck", name: "Nested brackets (k-Dyck)", short: "Dyck", color: "var(--s5)", shape: "circle", group: "b" },
+  { key: "induction", name: "Copied spans (induction)", short: "Induction", color: "var(--s6)", shape: "square", group: "b" },
+  { key: "zipf", name: "Word-like text (Zipf)", short: "Zipf words", color: "var(--s7)", shape: "triangle", group: "b" },
+  { key: "mix", name: "Mix of the three", short: "Mix", color: "var(--s8)", shape: "diamond", group: "b" },
+];
+SERIES.forEach(s => { s.group = s.group || "a"; });
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const fmt = (x, d = 3) => x == null ? "–" : Number(x).toFixed(d);
+const sci = x => { const e = Math.floor(Math.log10(x)); const m = x / 10 ** e; return (Math.abs(m - 1) < 1e-9 ? "" : m.toFixed(m % 1 ? 1 : 0) + "×") + "10" + String(e).replace(/./g, c => "⁰¹²³⁴⁵⁶⁷⁸⁹⁻"["0123456789-".indexOf(c)]); };
+const rows = (budget, method) => DATA.filter(r => r.budget === budget && r.method === method).sort((a, b) => a.frac - b.frac);
+const scratch = b => DATA.find(r => r.budget === b && r.method === "scratch");
+
+function niceTicks(lo, hi, n) {
+  const step0 = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= step0);
+  const t = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) t.push(+v.toFixed(10)); return t;
+}
+function marker(g, shape, x, y, r, color) {
+  let m;
+  if (shape === "square") m = el("rect", { x: x - r * .85, y: y - r * .85, width: r * 1.7, height: r * 1.7, rx: 1.5 }, g);
+  else if (shape === "triangle") m = el("path", { d: `M${x},${y - r * 1.1} L${x + r},${y + r * .75} L${x - r},${y + r * .75}Z` }, g);
+  else if (shape === "diamond") m = el("path", { d: `M${x},${y - r * 1.15} L${x + r * 1.05},${y} L${x},${y + r * 1.15} L${x - r * 1.05},${y}Z` }, g);
+  else m = el("circle", { cx: x, cy: y, r }, g);
+  m.setAttribute("fill", color); m.setAttribute("stroke", "var(--surface)"); m.setAttribute("stroke-width", 2); m.classList.add("mk");
+  return m;
+}
+function legend(id, items) {
+  const box = document.getElementById(id);
+  box.innerHTML = items.map(s => {
+    const sh = { circle: '<circle cx="7" cy="7" r="4.5"/>', square: '<rect x="3" y="3" width="8" height="8" rx="1.5"/>', triangle: '<path d="M7,2 L12,11 L2,11Z"/>', diamond: '<path d="M7,1.5 L12.5,7 L7,12.5 L1.5,7Z"/>', dash: '<line x1="0" y1="7" x2="14" y2="7" stroke-width="2" stroke-dasharray="4 3"/>', line: '<line x1="0" y1="7" x2="14" y2="7" stroke-width="2"/>' }[s.shape];
+    const paint = s.shape === "dash" || s.shape === "line" ? `stroke="${s.color}" fill="none"` : `fill="${s.color}"`;
+    return `<span><svg width="14" height="14" ${paint}>${sh}</svg>${s.name}</span>`;
+  }).join("");
+}
+
+/* Generic chart: series = [{name, color, shape, pts:[{x,y,err,tip}], dash, line}] */
+function chart(id, { series, xDomain, yDomain, xTicks, yTicks, xFmt, yFmt, xTitle, yTitle, refs = [], width = 900, height = 380, labels = true,
+                     xTip = v => `${sci(Math.max(v, 1))} FLOPs`, empty = "no Shakespeare training yet", valFmt = v => fmt(v) }) {
+  const root = document.getElementById(id); root.innerHTML = "";
+  const m = { t: 14, r: labels ? 150 : 20, b: 44, l: 52 };
+  const svg = el("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": yTitle + " by " + xTitle }, root);
+  const W = width - m.l - m.r, H = height - m.t - m.b;
+  const X = v => m.l + (v - xDomain[0]) / (xDomain[1] - xDomain[0]) * W;
+  const Y = v => m.t + (1 - (v - yDomain[0]) / (yDomain[1] - yDomain[0])) * H;
+  const grid = el("g", {}, svg);
+  yTicks.forEach(t => { el("line", { x1: m.l, x2: m.l + W, y1: Y(t), y2: Y(t), stroke: "var(--grid)", "stroke-width": 1 }, grid); el("text", { x: m.l - 8, y: Y(t) + 4, "text-anchor": "end" }, grid).textContent = yFmt(t); });
+  xTicks.forEach(t => { el("text", { x: X(t), y: m.t + H + 18, "text-anchor": "middle" }, grid).textContent = xFmt(t); });
+  el("line", { x1: m.l, x2: m.l + W, y1: m.t + H, y2: m.t + H, stroke: "var(--rule)", "stroke-width": 1 }, grid);
+  el("text", { x: m.l + W / 2, y: height - 6, "text-anchor": "middle", class: "axis-title" }, svg).textContent = xTitle;
+  el("text", { x: 14, y: m.t + H / 2, "text-anchor": "middle", class: "axis-title", transform: `rotate(-90 14 ${m.t + H / 2})` }, svg).textContent = yTitle;
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; root.appendChild(tip);
+  const show = (html, cx, cy) => { tip.innerHTML = html; tip.hidden = false; const r = root.getBoundingClientRect(), s = r.width / width; let left = cx * s + 12, top = cy * s - 10; if (left + tip.offsetWidth > r.width) left = cx * s - tip.offsetWidth - 12; tip.style.left = left + "px"; tip.style.top = Math.max(0, top) + "px"; };
+  const hide = () => { tip.hidden = true; };
+  refs.forEach(rf => {
+    el("line", { x1: m.l, x2: m.l + W, y1: Y(rf.y), y2: Y(rf.y), stroke: rf.color, "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+    if (labels) el("text", { x: m.l + W + 8, y: Y(rf.y) + 4, class: "lab" }, svg).textContent = rf.label;
+  });
+  const endLabels = [];
+  series.forEach(s => {
+    const pts = s.pts.filter(p => p.y != null && p.y >= yDomain[0] - 1e-9 && p.y <= yDomain[1] + 1e-9);
+    if (!pts.length) return;
+    const g = el("g", {}, svg);
+    if (s.line !== false && pts.length > 1) el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(p.x) + "," + Y(p.y)).join(""), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-dasharray": s.dash || null }, g);
+    pts.forEach(p => {
+      if (p.err) { el("line", { x1: X(p.x), x2: X(p.x), y1: Y(Math.min(yDomain[1], p.y + p.err)), y2: Y(Math.max(yDomain[0], p.y - p.err)), stroke: s.color, "stroke-width": 1.5 }, g); }
+      if (s.shape) {
+        const mk = marker(g, s.shape, X(p.x), Y(p.y), 4.5, s.color);
+        const hit = el("circle", { cx: X(p.x), cy: Y(p.y), r: 12, fill: "transparent" }, g);
+        hit.addEventListener("mouseenter", () => { mk.setAttribute("r", 6); show(p.tip, X(p.x), Y(p.y)); });
+        hit.addEventListener("mouseleave", () => { mk.setAttribute("r", 4.5); hide(); });
+      }
+    });
+    const last = pts[pts.length - 1];
+    if (labels) endLabels.push({ y: Y(last.y), x: X(last.x), text: s.short || s.name });
+  });
+  // direct end labels, nudged apart
+  endLabels.sort((a, b) => a.y - b.y);
+  for (let i = 1; i < endLabels.length; i++) if (endLabels[i].y - endLabels[i - 1].y < 15) endLabels[i].y = endLabels[i - 1].y + 15;
+  endLabels.forEach(l => { el("text", { x: m.l + W + 8, y: l.y + 4, class: "lab" }, svg).textContent = l.text; });
+  // crosshair for curve charts
+  if (series.some(s => !s.shape)) {
+    const cross = el("line", { y1: m.t, y2: m.t + H, stroke: "var(--muted)", "stroke-width": 1, visibility: "hidden" }, svg);
+    const overlay = el("rect", { x: m.l, y: m.t, width: W, height: H, fill: "transparent" }, svg);
+    overlay.addEventListener("mousemove", ev => {
+      const pt = svg.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+      const xv = xDomain[0] + (p.x - m.l) / W * (xDomain[1] - xDomain[0]);
+      cross.setAttribute("x1", p.x); cross.setAttribute("x2", p.x); cross.setAttribute("visibility", "visible");
+      const lines = series.map(s => { const q = s.pts.filter(q => q.y != null).reduce((a, b) => Math.abs(b.x - xv) < Math.abs(a.x - xv) ? b : a, { x: Infinity }); return q.x !== Infinity && Math.abs(q.x - xv) < (xDomain[1] - xDomain[0]) / 30 ? `${s.short || s.name}: ${valFmt(q.y)}` : null; }).filter(Boolean);
+      show(`<b>${xTip(xv)}</b><br>` + (lines.join("<br>") || empty), p.x, p.y);
+    });
+    overlay.addEventListener("mouseleave", () => { cross.setAttribute("visibility", "hidden"); hide(); });
+  }
+}
+
+// ---- main: final loss vs warm-up share at 1e14
+const B = "1e14", sc = scratch(B);
+const present = SERIES.filter(s => rows(B, s.key).length);
+const mainSeries = present.map(s => ({ ...s, pts: rows(B, s.key).map(r => ({ x: r.sp_share * 100, y: r.final_mean, err: r.final_std,
+  tip: `<b>${s.short}</b> · target ${Math.round(r.frac * 100)}%<br>actual warm-up ${(r.sp_share * 100).toFixed(1)}%<br>final ${fmt(r.final_mean)} ± ${fmt(r.final_std)}<br>best LR ${r.best_lr} · ${r.seeds} seeds` + (r.rounds.length ? `<br>${r.method === "pcfg" ? "PCFG steps" : "self-play rounds"} ${r.rounds.join("/")}` : "") })) }));
+const allY = mainSeries.flatMap(s => s.pts.map(p => p.y + (p.err || 0))).concat([sc.final_mean]);
+const yMax = Math.max(...allY), yMin = Math.min(sc.final_mean - 0.01, ...mainSeries.flatMap(s => s.pts.map(p => p.y - (p.err || 0))));
+const yT = niceTicks(yMin, yMax, 5);
+["a", "b"].forEach(g => {
+  const ser = mainSeries.filter(s => s.group === g), all = SERIES.filter(s => s.group === g);
+  legend("legend-main-" + g, [...all.map(s => present.includes(s) ? s : { ...s, name: s.name + " (running)" }), { name: "Scratch", color: "var(--ref)", shape: "dash" }]);
+  chart("chart-main-" + g, { series: ser, xDomain: [0, 65], yDomain: [yT[0], yT[yT.length - 1]], xTicks: [0, 20, 40, 60], yTicks: yT,
+    xFmt: v => v + "%", yFmt: v => v.toFixed(2), xTitle: "Share of the budget spent on the warm-up", yTitle: "Final val bits/byte",
+    refs: [{ y: sc.final_mean, color: "var(--ref)", label: `Scratch ${fmt(sc.final_mean)}` }], width: 560, height: 380 });
+});
+
+// ---- curves at the 10% arm, 1e14
+function drawCurves(g) {
+  const cur = [{ key: "scratch", name: "Scratch", short: "Scratch", color: "var(--ref)", dash: "5 4" }, ...present.filter(s => s.group === g)].map(s => {
+    const r = s.key === "scratch" ? sc : DATA.find(r => r.budget === B && r.method === s.key && Math.abs(r.frac - 0.1) < 1e-6);
+    return r ? { ...s, shape: null, pts: r.curve.map(([x, y]) => ({ x, y })) } : null;
+  }).filter(Boolean);
+  legend("legend-curve", cur.map(s => ({ name: s.short, color: s.color, shape: s.dash ? "dash" : "line" })));
+  chart("chart-curve", { series: cur, xDomain: [0, 1e14], yDomain: [2.1, 3.0], xTicks: [0, 2.5e13, 5e13, 7.5e13, 1e14], yTicks: [2.1, 2.3, 2.5, 2.7, 2.9],
+    xFmt: v => v ? sci(v) : "0", yFmt: v => v.toFixed(1), xTitle: "Total FLOPs spent (warm-up + Shakespeare)", yTitle: "Val bits/byte", width: 560, height: 360, labels: false });
+  ["a", "b"].forEach(k => document.getElementById("grp-" + k).setAttribute("aria-pressed", String(k === g)));
+}
+let curveGroup = "a";
+try { curveGroup = localStorage.getItem("curveGroup") || "a"; } catch (e) {}
+["a", "b"].forEach(k => document.getElementById("grp-" + k).addEventListener("click", () => { try { localStorage.setItem("curveGroup", k); } catch (e) {} drawCurves(k); }));
+drawCurves(curveGroup);
+
+// ---- overtraining at 1e15 (BF paper rounds): final vs best
+const o = rows("1e15", "bf_paper"), o0 = scratch("1e15");
+const ov = [o0, ...o].filter(Boolean);
+const mkTip = (r, what) => `<b>${r.method === "scratch" ? "Scratch" : "BF (paper rounds)"}</b><br>warm-up ${(r.sp_share * 100).toFixed(1)}%<br>${what}`;
+legend("legend-over", [{ name: "Final val", color: "var(--s1)", shape: "circle" }, { name: "Best val along the curve", color: "var(--s1)", shape: "square" }]);
+chart("chart-over", { series: [
+    { name: "Final", short: "Final", color: "var(--s1)", shape: "circle", pts: ov.map(r => ({ x: r.sp_share * 100, y: r.final_mean, err: r.final_std, tip: mkTip(r, `final ${fmt(r.final_mean)} ± ${fmt(r.final_std)}`) })) },
+    { name: "Best", short: "Best", color: "var(--s1)", shape: "square", dash: "2 3", pts: ov.map(r => ({ x: r.sp_share * 100, y: r.best_mean, tip: mkTip(r, `best ${fmt(r.best_mean)}`) })) }],
+  xDomain: [0, 55], yDomain: [2, 6.5], xTicks: [0, 10, 20, 30, 40, 50], yTicks: [2, 3, 4, 5, 6], xFmt: v => v + "%", yFmt: v => v.toFixed(0),
+  xTitle: "Share of 1e15 FLOPs spent on the warm-up", yTitle: "Val bits/byte", width: 560, height: 360, labels: false });
+
+// ---- table
+const T = document.getElementById("table");
+const order = ["scratch", "bf_paper", "bf", "stack", "pcfg", "dyck", "induction", "zipf", "mix"];
+const nameOf = k => k === "scratch" ? "Scratch" : SERIES.find(s => s.key === k).short;
+const colorOf = k => k === "scratch" ? "var(--ref)" : SERIES.find(s => s.key === k).color;
+let html = "<thead><tr><th>Budget · arm</th><th>Target</th><th>Actual warm-up</th><th>Rounds / steps</th><th>Best LR</th><th>Final val (LR 1e-3)</th><th>Final val (LR 3e-3)</th><th>Final val (best LR)</th><th>Best val</th><th>vs scratch</th></tr></thead><tbody>";
+["1e14", "1e15"].forEach(b => {
+  const s0 = scratch(b); let first = true;
+  order.forEach(k => rows(b, k).forEach(r => {
+    const d = r.final_mean - s0.final_mean, pl = lr => r.per_lr[lr] ? `${fmt(r.per_lr[lr].final_mean)} ± ${fmt(r.per_lr[lr].final_std)}` : "–";
+    html += `<tr class="${first ? "sep" : ""}"><td><span class="sw" style="background:${colorOf(k)}"></span>${sci(+b)} · ${nameOf(k)}</td><td>${Math.round(r.frac * 100)}%</td><td>${(r.sp_share * 100).toFixed(1)}%</td><td>${r.rounds.length ? r.rounds.join("/") : "–"}</td><td>${r.best_lr}</td><td>${pl("1e-3")}</td><td>${pl("3e-3")}</td><td class="${k === "scratch" ? "win" : ""}">${fmt(r.final_mean)} ± ${fmt(r.final_std)}</td><td>${fmt(r.best_mean)}</td><td>${k === "scratch" ? "–" : (d >= 0 ? "+" : "") + fmt(d)}</td></tr>`;
+    first = false;
+  }));
+});
+T.innerHTML = html + "</tbody>";
+
+// ---- verdict + notes (computed from the data)
+const warm = DATA.filter(r => r.budget === B && r.method !== "scratch");
+const bestWarm = warm.reduce((a, b) => (a && a.final_mean <= b.final_mean) ? a : b, null);
+const pending = SERIES.filter(s => !rows(B, s.key).length).map(s => s.short);
+document.getElementById("verdict").innerHTML = bestWarm
+  ? (bestWarm.final_mean < sc.final_mean - Math.max(sc.final_std, bestWarm.final_std)
+      ? `<b>Yes, one warm-up beat scratch:</b> ${nameOf(bestWarm.method)} at ${Math.round(bestWarm.frac * 100)}% reached ${fmt(bestWarm.final_mean)} vs ${fmt(sc.final_mean)} bits/byte.`
+      : `<b>No.</b> At 1e14 FLOPs, scratch reaches ${fmt(sc.final_mean)} ± ${fmt(sc.final_std)} bits/byte. The best warm-up (${nameOf(bestWarm.method)}, ${Math.round(bestWarm.frac * 100)}% of the budget) reaches ${fmt(bestWarm.final_mean)} ± ${fmt(bestWarm.final_std)}, which is within seed noise. Larger warm-ups are worse.`)
+    + (pending.length ? ` <span class="pending">Still running: ${pending.join(", ")}.</span>` : "")
+  : "";
+const notes = [
+  "Compute is counted with nanoGPT's estimate (6N + 12·L·d·T FLOPs per token). Self-play also pays for its reward pass (costed as a forward+backward) and for sampling and training its program generator.",
+  "Self-play gets very few rounds at these budgets: 1–7 rounds at 1e14 with paper-sized rounds (1024 programs × 4096 bytes), against the paper's 8192. The small-round arms (128 × 1024) get several times more rounds for the same FLOPs.",
+  "The model is a Llama-style byte-level GPT (RMSNorm, RoPE, SwiGLU, no dropout) written in nanoGPT's style. It is not the karpathy/nanoGPT repo, so absolute numbers aren't comparable to nanoGPT's char-level Shakespeare baseline.",
+  "The stack machine is a new substrate built for this test: a bounded stack with arithmetic, dup/swap/over/rot, emit and loops. It favours counters, Fibonacci-like recurrences and powers where the Brainf*ck tape favours local cell patterns.",
+  "PCFG warm-up follows the paper's appendix H: a fresh random grammar per 1024-byte row, 2–16 terminal bytes, up to 8 nonterminals.",
+  "The hand-designed warm-ups target skills text needs early. Dyck is nested brackets over a random byte alphabet. Induction repeats earlier spans exactly, to train in-context copying. Zipf words is a made-up language per row, with a random vocabulary of lowercase words, a heavy-tailed word distribution, word-to-word statistics, spaces and capitalized sentences. Zipf words deliberately builds in priors about what text looks like.",
+  "Warm-started runs almost always did better at the higher learning rate (3e-3), and at 1e-3 several of them got much worse. Their best learning rate may be higher still. The paper also tried 1e-2 and swept weight decay; this sweep did not.",
+  "Self-play arms move the weights the least for their FLOPs, because much of their compute goes to the reward pass and the program generator instead of learner updates. Part of why they rank closest to scratch may be that they change the starting point the least.",
+];
+// ---- nanochat (rendered for the BPE run and the byte-level run)
+function renderNC(dataId, sfx) {
+  const raw = document.getElementById(dataId).textContent.trim();
+  if (!raw || raw.startsWith("/*")) return;
+  const NC = JSON.parse(raw);
+  const SETS = [["shakespeare", "Shakespeare"], ["python", "Python code"], ["arithmetic", "Arithmetic"], ["sequences", "Number sequences"], ["copy", "Copying"], ["bf_outputs", "Brainf*ck outputs"]];
+  const grp = (kind, share) => NC.filter(r => r.kind === kind && Math.abs(r.share - share) < 1e-6);
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  const std = a => { const m = mean(a); return Math.sqrt(mean(a.map(x => (x - m) ** 2))); };
+  const sc = grp("scratch", 0);
+  const shares = [...new Set(NC.filter(r => r.kind === "selfplay").map(r => r.share))].sort((a, b) => a - b);
+  const maxS = Math.max(...shares) * 100;
+  const scM = mean(sc.map(r => r.final));
+  const pt = (rs, share, label) => ({ x: share * 100, y: mean(rs.map(r => r.final)), err: std(rs.map(r => r.final)),
+    tip: `<b>${label}</b> · ${Math.round(share * 100)}%<br>final ${fmt(mean(rs.map(r => r.final)), 4)} ± ${fmt(std(rs.map(r => r.final)), 4)}<br>nanochat steps ${rs[0].iters}` });
+  const warm = { name: "Self-play warm start", short: "Self-play", color: "var(--s1)", shape: "circle",
+    pts: [pt(sc, 0, "Scratch"), ...shares.map(s => pt(grp("selfplay", s), s, "Self-play warm start"))] };
+  const ctrl = { name: "Random init, same nanochat steps", short: "Control", color: "var(--s2)", shape: "square", dash: "5 3",
+    pts: [pt(sc, 0, "Scratch"), ...shares.map(s => pt(grp("control", s), s, "Random init, same steps"))] };
+  const ys = [...warm.pts, ...ctrl.pts].flatMap(p => [p.y - p.err, p.y + p.err]);
+  const yT = niceTicks(Math.min(...ys) - 0.001, Math.max(...ys) + 0.001, 5);
+  legend("legend-nc" + sfx, [warm, ctrl]);
+  chart("chart-nc" + sfx, { series: [warm, ctrl], xDomain: [0, maxS * 1.1], yDomain: [yT[0], yT[yT.length - 1]], xTicks: niceTicks(0, maxS, 5), yTicks: yT,
+    xFmt: v => v + "%", yFmt: v => v.toFixed(3), xTitle: "Share of the budget given up (self-play or simply skipped)", yTitle: "Final val bits/byte", width: 560, height: 360, labels: false });
+
+  // OOD: warm - control per set (excluding bf_outputs), one series per share
+  const oodSets = SETS.filter(([k]) => k !== "bf_outputs");
+  const colors = ["var(--s1)", "var(--s3)", "var(--s7)", "var(--s5)", "var(--s8)"], shapes = ["circle", "triangle", "diamond", "square", "circle"];
+  const off = i => (i - (shares.length - 1) / 2) * (0.66 / shares.length);
+  const series = shares.map((s, i) => ({ name: `${Math.round(s * 100)}% self-play`, short: `${Math.round(s * 100)}%`, color: colors[i], shape: shapes[i], line: false,
+    pts: oodSets.map(([k, lab], j) => { const d = mean(grp("selfplay", s).map(r => r.ood[k])) - mean(grp("control", s).map(r => r.ood[k]));
+      return { x: j + 1 + off(i), y: d, tip: `<b>${lab}</b> · ${Math.round(s * 100)}% self-play<br>warm − control ${d >= 0 ? "+" : ""}${fmt(d, 4)}` }; }) }));
+  legend("legend-nc-ood" + sfx, [...series, { name: "Scratch seed spread", color: "var(--grid)", shape: "square" }]);
+  const allD = series.flatMap(sr => sr.pts.map(q => q.y)).concat(oodSets.map(([k]) => Math.abs(sc[0].ood[k] - sc[1].ood[k])));
+  const yLo = Math.min(-0.04, Math.floor(Math.min(...allD, ...oodSets.map(([k]) => -Math.abs(sc[0].ood[k] - sc[1].ood[k]))) * 50) / 50);
+  const yHi = Math.max(0.1, Math.ceil(Math.max(...allD) * 50) / 50);
+  const yTk = niceTicks(yLo, yHi, 6);
+  chart("chart-nc-ood" + sfx, { series, xDomain: [0.5, oodSets.length + 0.5], yDomain: [yTk[0], yTk[yTk.length - 1]], xTicks: [], yTicks: yTk,
+    xFmt: v => "", yFmt: v => (v > 0 ? "+" : "") + v.toFixed(2), xTitle: "", yTitle: "Warm − control (bits/byte)", width: 560, height: 360, labels: false });
+  // spread bars + set labels + zero line drawn on top of the generic chart
+  const svg = document.querySelector("#chart-nc-ood" + sfx + " svg");
+  if (svg && svg.viewBox && svg.viewBox.baseVal) {
+    const m = { t: 14, l: 52, r: 20, b: 44 }, W = 560 - m.l - m.r, H = 360 - m.t - m.b;
+    const y0 = yTk[0], y1 = yTk[yTk.length - 1];
+    const X = v => m.l + (v - 0.5) / oodSets.length * W, Y = v => m.t + (1 - (v - y0) / (y1 - y0)) * H;
+    const under = svg.firstChild;
+    oodSets.forEach(([k, lab], j) => {
+      const spread = Math.abs(sc[0].ood[k] - sc[1].ood[k]);
+      const r = el("rect", { x: X(j + 1) - 26, width: 52, y: Y(spread), height: Y(-spread) - Y(spread), fill: "var(--grid)" });
+      svg.insertBefore(r, under);
+      el("text", { x: X(j + 1), y: m.t + H + 18, "text-anchor": "middle", class: "lab" }, svg).textContent = lab;
+    });
+    el("line", { x1: m.l, x2: m.l + W, y1: Y(0), y2: Y(0), stroke: "var(--ink-2)", "stroke-width": 1 }, svg);
+  }
+
+  // table
+  const arms = [["Scratch", sc], ...shares.flatMap(s => [[`Self-play ${Math.round(s * 100)}%`, grp("selfplay", s)], [`Control ${Math.round(s * 100)}% (random init, same steps)`, grp("control", s)]]),
+    ...shares.filter(s => grp("free", s).length).map(s => [`Free ${Math.round(s * 100)}% checkpoint + full budget (self-play not charged)`, grp("free", s)])];
+  let h = "<thead><tr><th>Arm (2 seeds)</th><th>Steps</th><th>Final val</th>" + SETS.map(([, l]) => `<th>${l}</th>`).join("") + "</tr></thead><tbody>";
+  arms.forEach(([lab, rs], i) => {
+    h += `<tr class="${i && i % 2 === 1 ? "sep" : ""}"><td>${lab}</td><td>${rs[0].iters}</td><td class="${i === 0 ? "win" : ""}">${fmt(mean(rs.map(r => r.final)), 4)}</td>` +
+      SETS.map(([k]) => `<td>${fmt(mean(rs.map(r => r.ood[k])), k === "bf_outputs" ? 1 : 3)}</td>`).join("") + "</tr>";
+  });
+  document.getElementById("table-nc" + sfx).innerHTML = h + "</tbody>";
+
+  // free checkpoint vs scratch, val bits/byte by nanochat step (only where free arms exist)
+  const freeShares = shares.filter(s => grp("free", s).length);
+  const freeBox = document.getElementById("chart-nc-free" + sfx);
+  if (freeShares.length && freeBox) {
+    const meanCurve = rs => rs[0].steps.map(([st], i) => ({ x: st, y: mean(rs.map(r => r.steps[i][1])) })).filter(p => p.x > 0);
+    const tipOf = (lab, p) => `<b>${lab}</b> · step ${p.x}<br>val ${fmt(p.y, 4)}`;
+    const fs = [{ name: "Scratch", short: "Scratch", color: "var(--ref)", shape: "circle", dash: "5 4", pts: meanCurve(sc).map(p => ({ ...p, tip: tipOf("Scratch", p) })) },
+      ...freeShares.map((s, i) => ({ name: `Free ${Math.round(s * 100)}% self-play checkpoint`, short: `Free ${Math.round(s * 100)}%`, color: colors[shares.indexOf(s)], shape: shapes[shares.indexOf(s)],
+        pts: meanCurve(grp("free", s)).map(p => ({ ...p, tip: tipOf(`Free ${Math.round(s * 100)}%`, p) })) }))];
+    const fy = fs.flatMap(sr => sr.pts.map(p => p.y)), maxStep = Math.max(...fs.flatMap(sr => sr.pts.map(p => p.x)));
+    const fyT = niceTicks(Math.min(...fy) - 0.01, Math.max(...fy) + 0.01, 5);
+    legend("legend-nc-free" + sfx, fs.map(sr => ({ name: sr.name, color: sr.color, shape: sr.dash ? "dash" : sr.shape })));
+    chart("chart-nc-free" + sfx, { series: fs, xDomain: [0, maxStep * 1.04], yDomain: [fyT[0], fyT[fyT.length - 1]], xTicks: niceTicks(0, maxStep, 5), yTicks: fyT,
+      xFmt: v => String(v), yFmt: v => v.toFixed(2), xTitle: "nanochat training step", yTitle: "Val bits/byte", width: 560, height: 360, labels: false });
+  }
+}
+renderNC("data-nc", "");
+renderNC("data-ncb", "-b");
+
+// ---- step-by-step curves
+(function renderSteps() {
+  const raw = document.getElementById("data-steps").textContent.trim();
+  if (!raw || raw.startsWith("/*")) return;
+  const S = JSON.parse(raw);
+  const LN2 = Math.log(2);
+  const SHARE_STYLE = { 0.05: ["var(--s1)", "5%"], 0.1: ["var(--s3)", "10%"], 0.2: ["var(--s7)", "20%"], 0.4: ["var(--s5)", "40%"], 0.6: ["var(--s8)", "60%"] };
+  // mean curve over seeds; unit conversion: bytes -> bits/byte, bpe -> nats/token
+  const curve = (dir, stem, bits, from = 0) => {
+    const runs = [0, 1].map(sd => S[`${dir}/${stem}_s${sd}`]).filter(Boolean);
+    if (!runs.length) return [];
+    const n = Math.min(...runs.map(r => r.loss.length));
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const x = runs[0].loss[i][0];
+      if (x < from) continue;
+      const y = runs.reduce((a, r) => a + r.loss[i][1], 0) / runs.length;
+      out.push({ x, y: bits ? y / LN2 : y });
+    }
+    return out;
+  };
+  const gap = (a, b) => { const mb = new Map(b.map(p => [p.x, p.y])); return a.filter(p => mb.has(p.x)).map(p => ({ x: p.x, y: p.y - mb.get(p.x) })); };
+  const stepTip = v => `step ${Math.round(v)}`;
+  const f4 = v => fmt(v, 4);
+  const line = (name, color, pts, extra = {}) => ({ name, short: name, color, shape: null, pts, ...extra });
+
+  // 1) free vs scratch (bytes)
+  const scB = curve("nc-bytes", "scratch", true);
+  const free = [0.4, 0.6].map(sh => [sh, curve("nc-bytes", `free_f${sh}`, true)]).filter(([, c]) => c.length);
+  if (scB.length && free.length) {
+    const ser = [line("Scratch", "var(--ref)", scB, { dash: "5 4" }), ...free.map(([sh, c]) => line(`Free ${SHARE_STYLE[sh][1]} checkpoint`, SHARE_STYLE[sh][0], c))];
+    legend("legend-st-free", ser.map(x => ({ name: x.name, color: x.color, shape: x.dash ? "dash" : "line" })));
+    chart("chart-st-free", { series: ser, xDomain: [0, 1180], yDomain: [1.2, 2.6], xTicks: [0, 200, 400, 600, 800, 1000, 1159], yTicks: [1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6],
+      xFmt: v => String(v), yFmt: v => v.toFixed(1), xTitle: "nanochat training step", yTitle: "Training loss (bits/byte)", xTip: stepTip, empty: "", valFmt: f4 });
+    const gser = free.map(([sh, c]) => line(`Free ${SHARE_STYLE[sh][1]} − scratch`, SHARE_STYLE[sh][0], gap(c, scB).filter(p => p.x >= 50)));
+    const gy = gser.flatMap(x => x.pts.map(p => p.y));
+    const gT = niceTicks(Math.max(-0.3, Math.min(-0.02, ...gy)), Math.min(0.1, Math.max(0.02, ...gy)), 6);
+    legend("legend-st-freegap", gser.map(x => ({ name: x.name, color: x.color, shape: "line" })));
+    chart("chart-st-freegap", { series: gser, xDomain: [0, 1180], yDomain: [gT[0], gT[gT.length - 1]], xTicks: [0, 250, 500, 750, 1000], yTicks: gT,
+      xFmt: v => String(v), yFmt: v => (v > 0 ? "+" : "") + v.toFixed(2), xTitle: "nanochat training step", yTitle: "Loss difference (bits/byte)",
+      refs: [{ y: 0, color: "var(--ink-2)", label: "" }], width: 560, height: 360, labels: false, xTip: stepTip, empty: "", valFmt: f4 });
+  }
+
+  // 2) warm - control gap by step, all shares (bytes) + 3) small multiples
+  const gapChart = (dir, bits, shares, ctrlStem, id, unit) => {
+    const ser = shares.map(sh => {
+      const w = curve(dir, `bf_f${sh}`, bits), c = curve(dir, ctrlStem(sh), bits);
+      return w.length && c.length ? line(`${SHARE_STYLE[sh][1]} self-play`, SHARE_STYLE[sh][0], gap(w, c).filter(p => p.x >= 50)) : null;
+    }).filter(Boolean);
+    if (!ser.length) return;
+    const gy = ser.flatMap(x => x.pts.map(p => p.y));
+    const lo = Math.max(Math.min(...gy), -0.3), hi = Math.min(Math.max(...gy), 0.4);
+    const gT = niceTicks(Math.min(-0.02, lo), Math.max(0.02, hi), 6);
+    legend("legend-" + id, ser.map(x => ({ name: x.name, color: x.color, shape: "line" })));
+    chart("chart-" + id, { series: ser, xDomain: [0, Math.max(...ser.flatMap(x => x.pts.map(p => p.x))) * 1.03], yDomain: [gT[0], gT[gT.length - 1]],
+      xTicks: niceTicks(0, Math.max(...ser.flatMap(x => x.pts.map(p => p.x))), 5), yTicks: gT,
+      xFmt: v => String(v), yFmt: v => (v > 0 ? "+" : "") + v.toFixed(2), xTitle: "nanochat training step", yTitle: `Warm − control (${unit})`,
+      refs: [{ y: 0, color: "var(--ink-2)", label: "" }], width: id.endsWith("bpe") ? 900 : 560, height: 360, labels: false, xTip: stepTip, empty: "", valFmt: f4 });
+  };
+  gapChart("nc-bytes", true, [0.05, 0.1, 0.2, 0.4, 0.6], sh => `control_f${sh}`, "st-gap-b", "bits/byte");
+  const bpeCtrl = sh => `short${(1 - sh).toFixed(2)}`;
+  gapChart("nc-cm", false, [0.05, 0.1, 0.2], bpeCtrl, "st-gap-bpe", "nats/token");
+
+  const multiples = (boxId, dir, bits, shares, ctrlStem, sc, yDom, unit) => {
+    const box = document.getElementById(boxId);
+    if (!box || !sc.length) return;
+    box.innerHTML = shares.map(sh => `<figure><div class="panel-title">${SHARE_STYLE[sh][1]} self-play share</div><div class="legend" id="${boxId}-lg-${sh}"></div><div class="chart" id="${boxId}-${sh}"></div></figure>`).join("");
+    shares.forEach(sh => {
+      const w = curve(dir, `bf_f${sh}`, bits, 20), c = curve(dir, ctrlStem(sh), bits, 20);
+      if (!w.length) return;
+      const ser = [line("Scratch", "var(--muted)", sc.filter(p => p.x >= 20), { dash: "2 3" }), line("Random init", "var(--ink-2)", c, { dash: "5 4" }), line("Self-play warm start", SHARE_STYLE[sh][0], w)];
+      legend(`${boxId}-lg-${sh}`, ser.map(x => ({ name: x.name, color: x.color, shape: x.dash ? "dash" : "line" })));
+      const maxX = Math.max(...sc.map(p => p.x));
+      chart(`${boxId}-${sh}`, { series: ser, xDomain: [0, maxX * 1.03], yDomain: yDom, xTicks: niceTicks(0, maxX, 4), yTicks: niceTicks(yDom[0], yDom[1], 4),
+        xFmt: v => String(v), yFmt: v => v.toFixed(1), xTitle: "step", yTitle: unit, width: 420, height: 300, labels: false, xTip: stepTip, empty: "", valFmt: f4 });
+    });
+  };
+  multiples("multi-b", "nc-bytes", true, [0.05, 0.1, 0.2, 0.4, 0.6], sh => `control_f${sh}`, scB, [1.2, 2.8], "bits/byte");
+  multiples("multi-bpe", "nc-cm", false, [0.05, 0.1, 0.2], bpeCtrl, curve("nc-cm", "scratch", false), [3.0, 5.0], "nats/token");
+})();
+
+document.getElementById("notes").innerHTML = notes.map(n => `<li>${n}</li>`).join("");
+</script>
